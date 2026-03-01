@@ -19,17 +19,15 @@ public class HLTService
     private readonly HLTHelper _helpers;
     private readonly HLTGlobals _globals;
     private readonly IOptionsMonitor<HLTConfigs> _config;
-    private readonly IHanZombiePlagueAPI? _zpApi;
     public HLTService(ISwiftlyCore core, ILogger<HLTService> logger,
         HLTHelper helpers, HLTGlobals globals,
-        IOptionsMonitor<HLTConfigs> config, IHanZombiePlagueAPI? API = null)
+        IOptionsMonitor<HLTConfigs> config)
     {
         _core = core;
         _logger = logger;
         _helpers = helpers;
         _globals = globals;
         _config = config;
-        _zpApi = API;
     }
 
     public CBaseModelEntity CreateMineEnt(IPlayer player, string mineName)
@@ -313,7 +311,12 @@ public class HLTService
                 if (targetPawn == null || !targetPawn.IsValid)
                     return null;
 
-                bool isZombie = _zpApi?.HZP_IsZombie(target.PlayerID) ?? false;
+                var _zpAPI = HanLaserTripmineS2._zpApi;
+                if (_zpAPI == null)
+                    return null;
+
+
+                bool isZombie = _zpAPI.HZP_IsZombie(target.PlayerID);
                 bool isOwner = player.PlayerID == target.PlayerID;
                 bool isOwnerTeam = OwnerPawn.TeamNum == targetPawn.TeamNum;
 

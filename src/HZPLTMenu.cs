@@ -16,17 +16,15 @@ public class HLTMenu
     private readonly IOptionsMonitor<HLTConfigs> _config;
     private readonly HLTMenuHelper _menuhelper;
     private readonly HLTService _service;
-    private IHanZombiePlagueAPI _zpApi;
     public HLTMenu(ISwiftlyCore core, ILogger<HLTMenu> logger,
         HLTMenuHelper menuhelper, IOptionsMonitor<HLTConfigs> config,
-        HLTService service, IHanZombiePlagueAPI API)
+        HLTService service)
     {
         _core = core;
         _logger = logger;
         _menuhelper = menuhelper;
         _config = config;
         _service = service;
-        _zpApi = API;
     }
     
     
@@ -73,8 +71,12 @@ public class HLTMenu
                 if (steamId == 0)
                     continue;
 
-                bool isZombie = _zpApi?.HZP_IsZombie(player.PlayerID) ?? false;
-                if(isZombie)
+                var _zpAPI = HanLaserTripmineS2._zpApi;
+                if (_zpAPI == null)
+                    continue;
+
+                bool isZombie = _zpAPI.HZP_IsZombie(player.PlayerID);
+                if (isZombie)
                     continue;
 
                 if (!string.IsNullOrEmpty(mineCfg.Permissions) && !_core.Permission.PlayerHasPermission(steamId, mineCfg.Permissions))

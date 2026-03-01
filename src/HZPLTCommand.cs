@@ -13,16 +13,13 @@ public class HLTCommand
     private readonly ISwiftlyCore _core;
     private readonly HLTMenu _menus;
     private readonly IOptionsMonitor<HLTMainConfigs> _mainconfig;
-    private readonly IHanZombiePlagueAPI? _zpApi;
     public HLTCommand(ISwiftlyCore core, ILogger<HLTCommand> logger,
-        HLTMenu menus, IOptionsMonitor<HLTMainConfigs> mainconfig
-        , IHanZombiePlagueAPI? API = null)
+        HLTMenu menus, IOptionsMonitor<HLTMainConfigs> mainconfig)
     {
         _core = core;
         _logger = logger;
         _menus = menus;
         _mainconfig = mainconfig;
-        _zpApi = API;
     }
 
     public void Commands()
@@ -41,7 +38,11 @@ public class HLTCommand
         if (Controller == null || !Controller.IsValid)
             return;
 
-        bool isZombie = _zpApi?.HZP_IsZombie(player.PlayerID) ?? false;
+        var _zpAPI = HanLaserTripmineS2._zpApi;
+        if(_zpAPI == null)
+            return;
+
+        bool isZombie = _zpAPI.HZP_IsZombie(player.PlayerID);
         if (isZombie)
             return;
 

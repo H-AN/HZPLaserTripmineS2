@@ -20,10 +20,15 @@ public partial class HanLaserTripmineS2(ISwiftlyCore core) : BasePlugin(core)
 {
     private ServiceProvider? ServiceProvider { get; set; }
     private IOptionsMonitor<HLTConfigs> _mineCFGMonitor = null!;
+    private IOptionsMonitor<HLTMainConfigs> _mainCfg = null!;
     private HLTCommand _Commands = null!;
     private HLTEvents _Events = null!;
-    private IHanZombiePlagueAPI? _zpApi;
-
+    private HLTService _Service = null!;
+    private HLTHelper _Helpers = null!;
+    private HLTGlobals _Globals = null!;
+    private HLTMenu _Menu = null!;
+    private HLTMenuHelper _MenuHelper = null!;
+    public static IHanZombiePlagueAPI? _zpApi { get; private set; }
     public override void UseSharedInterface(IInterfaceManager interfaceManager)
     {
         if (interfaceManager.HasSharedInterface("HanZombiePlague")) //获取api  Get API
@@ -32,6 +37,7 @@ public partial class HanLaserTripmineS2(ISwiftlyCore core) : BasePlugin(core)
             Core.Logger.LogInformation($"[HZPLaserTripmineS2] 成功获取 HZP API/Successfully obtained HZP API，Hash: {_zpApi.GetHashCode()}");
         }
     }
+
 
     public override void Load(bool hotReload)
     {
@@ -56,8 +62,6 @@ public partial class HanLaserTripmineS2(ISwiftlyCore core) : BasePlugin(core)
             .AddOptionsWithValidateOnStart<HLTConfigs>()
             .BindConfiguration("HZPMineS2CFG");
 
-        collection.AddSingleton<IHanZombiePlagueAPI>(sp => _zpApi!);
-
         collection.AddSingleton<HLTGlobals>();
         collection.AddSingleton<HLTHelper>();
         collection.AddSingleton<HLTMenu>();
@@ -72,6 +76,11 @@ public partial class HanLaserTripmineS2(ISwiftlyCore core) : BasePlugin(core)
 
         _Commands = ServiceProvider.GetRequiredService<HLTCommand>();
         _Events = ServiceProvider.GetRequiredService<HLTEvents>();
+        _Service = ServiceProvider.GetRequiredService<HLTService>();
+        _Helpers = ServiceProvider.GetRequiredService<HLTHelper>();
+        _Globals = ServiceProvider.GetRequiredService<HLTGlobals>();
+        _Menu = ServiceProvider.GetRequiredService<HLTMenu>();
+        _MenuHelper = ServiceProvider.GetRequiredService<HLTMenuHelper>();
 
         _mineCFGMonitor = ServiceProvider.GetRequiredService<IOptionsMonitor<HLTConfigs>>();
 
@@ -80,11 +89,17 @@ public partial class HanLaserTripmineS2(ISwiftlyCore core) : BasePlugin(core)
             Core.Logger.LogInformation($"{Core.Localizer["ServerCfgChange"]}");
         });
 
+        _mainCfg = ServiceProvider.GetRequiredService<IOptionsMonitor<HLTMainConfigs>>();
+        _mainCfg.OnChange(newConfig =>
+        {
+            Core.Logger.LogInformation($"{Core.Localizer["ServerCfgChange"]}");
+        });
 
         _Events.HookEvents();
         _Commands.Commands();
 
     }
+
 
     public override void Unload()
     {
