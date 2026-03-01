@@ -56,6 +56,8 @@ public partial class HanLaserTripmineS2(ISwiftlyCore core) : BasePlugin(core)
             .AddOptionsWithValidateOnStart<HLTConfigs>()
             .BindConfiguration("HZPMineS2CFG");
 
+        collection.AddSingleton<IHanZombiePlagueAPI>(sp => _zpApi!);
+
         collection.AddSingleton<HLTGlobals>();
         collection.AddSingleton<HLTHelper>();
         collection.AddSingleton<HLTMenu>();
@@ -64,10 +66,7 @@ public partial class HanLaserTripmineS2(ISwiftlyCore core) : BasePlugin(core)
         collection.AddSingleton<HLTEvents>();
         collection.AddSingleton<HLTCommand>();
 
-        if (_zpApi != null)
-        {
-            collection.AddSingleton<IHanZombiePlagueAPI>(_zpApi);
-        }
+        
 
         ServiceProvider = collection.BuildServiceProvider();
 

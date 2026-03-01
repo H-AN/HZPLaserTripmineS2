@@ -19,10 +19,10 @@ public class HLTService
     private readonly HLTHelper _helpers;
     private readonly HLTGlobals _globals;
     private readonly IOptionsMonitor<HLTConfigs> _config;
-    private IHanZombiePlagueAPI _zpApi;
+    private readonly IHanZombiePlagueAPI? _zpApi;
     public HLTService(ISwiftlyCore core, ILogger<HLTService> logger,
         HLTHelper helpers, HLTGlobals globals,
-        IOptionsMonitor<HLTConfigs> config, IHanZombiePlagueAPI API)
+        IOptionsMonitor<HLTConfigs> config, IHanZombiePlagueAPI? API = null)
     {
         _core = core;
         _logger = logger;

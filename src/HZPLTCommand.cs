@@ -13,10 +13,10 @@ public class HLTCommand
     private readonly ISwiftlyCore _core;
     private readonly HLTMenu _menus;
     private readonly IOptionsMonitor<HLTMainConfigs> _mainconfig;
-    private IHanZombiePlagueAPI _zpApi;
+    private readonly IHanZombiePlagueAPI? _zpApi;
     public HLTCommand(ISwiftlyCore core, ILogger<HLTCommand> logger,
         HLTMenu menus, IOptionsMonitor<HLTMainConfigs> mainconfig
-        , IHanZombiePlagueAPI API)
+        , IHanZombiePlagueAPI? API = null)
     {
         _core = core;
         _logger = logger;
