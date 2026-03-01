@@ -1,3 +1,4 @@
+using HanZombiePlagueS2;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -6,7 +7,7 @@ using SwiftlyS2.Shared;
 using SwiftlyS2.Shared.Plugins;
 
 
-namespace HanLaserTripmineS2;
+namespace HZPLaserTripmineS2;
 
 [PluginMetadata(
     Id = "HZPLaserTripmineS2",
@@ -21,17 +22,27 @@ public partial class HanLaserTripmineS2(ISwiftlyCore core) : BasePlugin(core)
     private IOptionsMonitor<HLTConfigs> _mineCFGMonitor = null!;
     private HLTCommand _Commands = null!;
     private HLTEvents _Events = null!;
+    private IHanZombiePlagueAPI? _zpApi;
+
+    public override void UseSharedInterface(IInterfaceManager interfaceManager)
+    {
+        if (interfaceManager.HasSharedInterface("HanZombiePlague")) //获取api  Get API
+        {
+            _zpApi = interfaceManager.GetSharedInterface<IHanZombiePlagueAPI>("HanZombiePlague");  //获取api  Get API
+            Core.Logger.LogInformation($"[HZPLaserTripmineS2] 成功获取 HZP API/Successfully obtained HZP API，Hash: {_zpApi.GetHashCode()}");
+        }
+    }
 
     public override void Load(bool hotReload)
     {
-        Core.Configuration.InitializeJsonWithModel<HLTMainConfigs>("HLTMainConfigs.jsonc", "HanLaserTripmineS2MainCFG").Configure(builder =>
+        Core.Configuration.InitializeJsonWithModel<HLTMainConfigs>("HZPLTMainConfigs.jsonc", "HZPLaserTripmineS2MainCFG").Configure(builder =>
         {
-            builder.AddJsonFile("HLTMainConfigs.jsonc", false, true);
+            builder.AddJsonFile("HZPLTMainConfigs.jsonc", false, true);
         });
 
-        Core.Configuration.InitializeJsonWithModel<HLTConfigs>("HanMineS2.jsonc", "HanMineS2CFG").Configure(builder =>
+        Core.Configuration.InitializeJsonWithModel<HLTConfigs>("HZPMineS2.jsonc", "HZPMineS2CFG").Configure(builder =>
         {
-            builder.AddJsonFile("HanMineS2.jsonc", false, true);
+            builder.AddJsonFile("HZPMineS2.jsonc", false, true);
         });
 
         var collection = new ServiceCollection();
@@ -39,11 +50,11 @@ public partial class HanLaserTripmineS2(ISwiftlyCore core) : BasePlugin(core)
 
         collection
             .AddOptionsWithValidateOnStart<HLTMainConfigs>()
-            .BindConfiguration("HanLaserTripmineS2MainCFG");
+            .BindConfiguration("HZPLaserTripmineS2MainCFG");
 
         collection
             .AddOptionsWithValidateOnStart<HLTConfigs>()
-            .BindConfiguration("HanMineS2CFG");
+            .BindConfiguration("HZPMineS2CFG");
 
         collection.AddSingleton<HLTGlobals>();
         collection.AddSingleton<HLTHelper>();
@@ -52,6 +63,11 @@ public partial class HanLaserTripmineS2(ISwiftlyCore core) : BasePlugin(core)
         collection.AddSingleton<HLTService>();
         collection.AddSingleton<HLTEvents>();
         collection.AddSingleton<HLTCommand>();
+
+        if (_zpApi != null)
+        {
+            collection.AddSingleton<IHanZombiePlagueAPI>(_zpApi);
+        }
 
         ServiceProvider = collection.BuildServiceProvider();
 

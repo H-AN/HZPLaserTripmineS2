@@ -1,4 +1,5 @@
 using System.Drawing;
+using HanZombiePlagueS2;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SwiftlyS2.Core.Menus.OptionsBase;
@@ -6,7 +7,7 @@ using SwiftlyS2.Shared;
 using SwiftlyS2.Shared.Menus;
 using SwiftlyS2.Shared.Players;
 
-namespace HanLaserTripmineS2;
+namespace HZPLaserTripmineS2;
 
 public class HLTMenu
 {
@@ -15,15 +16,17 @@ public class HLTMenu
     private readonly IOptionsMonitor<HLTConfigs> _config;
     private readonly HLTMenuHelper _menuhelper;
     private readonly HLTService _service;
+    private IHanZombiePlagueAPI _zpApi;
     public HLTMenu(ISwiftlyCore core, ILogger<HLTMenu> logger,
         HLTMenuHelper menuhelper, IOptionsMonitor<HLTConfigs> config,
-        HLTService service)
+        HLTService service, IHanZombiePlagueAPI API)
     {
         _core = core;
         _logger = logger;
         _menuhelper = menuhelper;
         _config = config;
         _service = service;
+        _zpApi = API;
     }
     
     
@@ -70,6 +73,10 @@ public class HLTMenu
                 if (steamId == 0)
                     continue;
 
+                bool isZombie = _zpApi?.HZP_IsZombie(player.PlayerID) ?? false;
+                if(isZombie)
+                    continue;
+
                 if (!string.IsNullOrEmpty(mineCfg.Permissions) && !_core.Permission.PlayerHasPermission(steamId, mineCfg.Permissions))
                     continue;
 
@@ -108,6 +115,9 @@ public class HLTMenu
                     _core.Scheduler.NextTick(() =>
                     {
                         if (!clicker.IsValid)
+                            return;
+
+                        if (isZombie)
                             return;
 
                         _service.CreateMineEnt(clicker, mineCfg.Name);

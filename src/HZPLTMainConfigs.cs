@@ -1,4 +1,4 @@
-namespace HanLaserTripmineS2;
+namespace HZPLaserTripmineS2;
 
 public class HLTMainConfigs
 {

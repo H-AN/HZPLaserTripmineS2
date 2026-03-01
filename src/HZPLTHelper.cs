@@ -3,9 +3,9 @@ using SwiftlyS2.Shared;
 using SwiftlyS2.Shared.Natives;
 using SwiftlyS2.Shared.Players;
 using SwiftlyS2.Shared.SchemaDefinitions;
-using static HanLaserTripmineS2.HLTGlobals;
+using static HZPLaserTripmineS2.HLTGlobals;
 
-namespace HanLaserTripmineS2;
+namespace HZPLaserTripmineS2;
 public class HLTHelper
 {
     private readonly ILogger<HLTHelper> _logger;
@@ -58,13 +58,15 @@ public class HLTHelper
         if (owner == target || ownerPawn.TeamNum == targetPawn.TeamNum)
             return;
 
-        var KnockBack = CalculateKnockbackDirection(mineHandle, target, force);
-
-        var pawn = target.PlayerPawn;
-        if (pawn == null || !pawn.IsValid)
+        var mineRotation = mine.AbsRotation;
+        if (mineRotation == null)
             return;
 
-        pawn.AbsVelocity = KnockBack;
+        QAngle mineAngle = mineRotation.Value;
+        mineAngle.ToDirectionVectors(out Vector vecKnockback, out _, out _);
+        var pushVelocity = vecKnockback * force;
+        var vel = targetPawn.AbsVelocity;
+        targetPawn.Teleport(null, null, vel + pushVelocity);
     }
 
     public SwiftlyS2.Shared.Natives.Vector CalculateKnockbackDirection(CHandle<CBaseModelEntity> mineHandle, IPlayer target, float force)

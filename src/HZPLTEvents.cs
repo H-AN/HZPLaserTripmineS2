@@ -4,7 +4,7 @@ using SwiftlyS2.Shared;
 using SwiftlyS2.Shared.GameEventDefinitions;
 using SwiftlyS2.Shared.Misc;
 
-namespace HanLaserTripmineS2;
+namespace HZPLaserTripmineS2;
 
 public class HLTEvents
 {

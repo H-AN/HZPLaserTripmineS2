@@ -1,3 +1,4 @@
+using HanZombiePlagueS2;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Mono.Cecil.Cil;
@@ -5,10 +6,10 @@ using SwiftlyS2.Shared;
 using SwiftlyS2.Shared.Natives;
 using SwiftlyS2.Shared.Players;
 using SwiftlyS2.Shared.SchemaDefinitions;
-using static HanLaserTripmineS2.HLTConfigs;
-using static HanLaserTripmineS2.HLTGlobals;
+using static HZPLaserTripmineS2.HLTConfigs;
+using static HZPLaserTripmineS2.HLTGlobals;
 
-namespace HanLaserTripmineS2;
+namespace HZPLaserTripmineS2;
 
 
 public class HLTService
@@ -18,15 +19,17 @@ public class HLTService
     private readonly HLTHelper _helpers;
     private readonly HLTGlobals _globals;
     private readonly IOptionsMonitor<HLTConfigs> _config;
+    private IHanZombiePlagueAPI _zpApi;
     public HLTService(ISwiftlyCore core, ILogger<HLTService> logger,
         HLTHelper helpers, HLTGlobals globals,
-        IOptionsMonitor<HLTConfigs> config)
+        IOptionsMonitor<HLTConfigs> config, IHanZombiePlagueAPI API)
     {
         _core = core;
         _logger = logger;
         _helpers = helpers;
         _globals = globals;
         _config = config;
+        _zpApi = API;
     }
 
     public CBaseModelEntity CreateMineEnt(IPlayer player, string mineName)
@@ -304,44 +307,48 @@ public class HLTService
                     hitPlayers.Add(target);
                 }
 
+
+
                 var targetPawn = target.PlayerPawn;
                 if (targetPawn == null || !targetPawn.IsValid)
                     return null;
 
+                bool isZombie = _zpApi?.HZP_IsZombie(target.PlayerID) ?? false;
+                bool isOwner = player.PlayerID == target.PlayerID;
                 bool isOwnerTeam = OwnerPawn.TeamNum == targetPawn.TeamNum;
-                bool isEnemy = !isOwnerTeam;
-                bool canTrigger = isEnemy || (isOwnerTeam && mineData.CanOwnerTeamTrigger);
 
-                if (mineData.CanExplorer)
+                bool canTrigger = isZombie || (isOwnerTeam && mineData.CanOwnerTeamTrigger);
+
+                if (canTrigger)
                 {
-                    if (canTrigger)
+                    if (mineData.CanExplorer)
                     {
                         CreateGrenadeAndExplorer(player, mineHandle, beamHandle, mineData);
                         return hitPlayers;
                     }
+                    else
+                    {
+                        if (isZombie)
+                        {
+                            if (mineData.LaserDamage > 0)
+                                _helpers.ApplyDamage(player, target, mineHandle, mineData.LaserDamage, mineData.LaserTouchSound);
+
+                            if (mineData.LaserKnockBack != 0)
+                                _helpers.ApplyKnockBack(mineHandle, player, target, mineData.LaserKnockBack);
+                        }
+                    }
+
+                    Vector offsetPoint = trace.HitPoint + direction * 8.0f;
+                    remainingDistance = remainingDistance * (1 - trace.Fraction) - 8.0f;
+                    currentStart = offsetPoint;
                 }
                 else
                 {
-                    if (mineData.LaserDamage > 0)
-                        _helpers.ApplyDamage(player, target, mineHandle, mineData.LaserDamage, mineData.LaserTouchSound);
-
-                    if (mineData.LaserKnockBack != 0)
-                        _helpers.ApplyKnockBack(mineHandle, player, target, mineData.LaserKnockBack);
-
+                    break;
                 }
-
-                Vector offsetPoint = trace.HitPoint + direction * 8.0f; 
-                remainingDistance = remainingDistance * (1 - trace.Fraction) - 8.0f;
-                currentStart = offsetPoint;
-
-
-            }
-            else
-            {
-                break;
             }
 
-            penetrationCount++;
+                penetrationCount++;
         }
 
         return hitPlayers;
