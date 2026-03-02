@@ -109,7 +109,7 @@ public class HLTMenu
                     TextStyle = MenuOptionTextStyle.ScrollLeftLoop,
                     CloseAfterClick = false
                 };
-                turretButton.Tag = "extend";
+                turretButton.Tag = "extend"; 
 
                 turretButton.Click += async (_, args) =>
                 {
