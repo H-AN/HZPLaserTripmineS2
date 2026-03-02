@@ -1,0 +1,16 @@
+{
+	"MenuTitle": "[H-AN/LaseMine] LaseMine Selection Menu",
+    "MenuSelelctLaseMine": "Select the LaseMine you want to create",
+	"FreeText": "Free",
+	"NoMoney": "You don't have enough money.",
+	"MenuLimitText": "Limit",
+	"LimitText": "∞",
+	"MineNameError": "The LaseMine named {0} was not found. Please check the configuration!",
+	"MineLimit": "[H-AN/LaseMine]You have reached the building limit for this LaseMine: maximum {0}",
+	"ServerCfgChange": "[H-AN/LaseMine] LaseMine configuration file has been hot-reloaded!",
+	"GlowColorError": "[H-AN/LaseMine] Error: SetGlow failed to parse color string {0}",
+	"CreateMineError": "[H-AN/LaseMine]Error",
+	"MenuButtonMove": "Move",
+	"MenuButtonConfirm": "Confirm",
+	"MenuButtonCancel": "Cancel"
+}
