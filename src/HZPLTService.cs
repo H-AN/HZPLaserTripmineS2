@@ -510,24 +510,6 @@ public class HLTService
         explosions.DetonateTimeUpdated();
 
         KillMine(mineHandle, beamHandle);
-        /*
-        if (_globals.MineThink.TryGetValue(mineHandle.Raw, out var repeatTask))
-        {
-            repeatTask?.Cancel();              
-            _globals.MineThink.Remove(mineHandle.Raw);  
-        }
-
-        _globals.MineData.Remove(mineHandle.Raw);
-
-        _core.Scheduler.NextTick(() =>
-        {
-            if (mine.IsValid)
-                mine.AcceptInput("Kill", 0);
-            if (beam.IsValid)
-                beam.AcceptInput("Kill", 0);
-        });
-        */
-
     }
 
     public LaserMine? GetMineConfigByName(string name, ILogger? logger = null)
