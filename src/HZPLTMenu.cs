@@ -116,10 +116,7 @@ public class HLTMenu
                     var clicker = args.Player;
                     _core.Scheduler.NextTick(() =>
                     {
-                        if (!clicker.IsValid)
-                            return;
-
-                        if (isZombie)
+                        if (!clicker.IsValid || clicker.IsFakeClient || !clicker.IsAlive || isZombie)
                             return;
 
                         _service.CreateMineEnt(clicker, mineCfg.Name);
