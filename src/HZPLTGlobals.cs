@@ -3,11 +3,16 @@ namespace HZPLaserTripmineS2;
 
 public class HLTGlobals
 {
+    public Dictionary<int, ulong> PlayerSteamCache = new();
+
     public Dictionary<uint, CancellationTokenSource> MineThink = new Dictionary<uint, CancellationTokenSource>();
 
     public Dictionary<ulong, Dictionary<string, HashSet<uint>>> PlayerMineCounts = new();
 
     public Dictionary<uint, Mines> MineData = new();
+
+    public Dictionary<int, HashSet<uint>> MineOwner = new();
+    public Dictionary<uint, uint> MineBeamMap = new();
 
     public class Mines
     {

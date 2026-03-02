@@ -92,7 +92,7 @@ public class HLTService
         }
 
         CBaseModelEntity mineEntity = _core.EntitySystem.CreateEntityByDesignerName<CBaseModelEntity>("prop_dynamic_override");
-        if (mineEntity == null)
+        if (mineEntity == null || !mineEntity.IsValid || !mineEntity.IsValidEntity)
             return null;
 
         try
@@ -132,13 +132,21 @@ public class HLTService
 
             mineSet.Add(mineHandle.Raw);
 
+            if (!_globals.MineOwner.TryGetValue(player.PlayerID, out var set))
+            {
+                set = new HashSet<uint>();
+                _globals.MineOwner[player.PlayerID] = set;
+            }
+
+            set.Add(mineHandle.Raw);
+
             var ent = mineHandle.Value;
             if (ent == null)
                 return null;
 
             _core.Scheduler.NextTick(() =>
             {
-                if (ent == null)
+                if (ent == null || !ent.IsValid || !ent.IsValidEntity)
                     return;
 
                 ent.SetModel(mineData.Model);
@@ -166,7 +174,7 @@ public class HLTService
             }
             _core.Scheduler.DelayBySeconds(1.0f, () =>
             {
-                if (ent == null)
+                if (ent == null || !ent.IsValid || !ent.IsValidEntity)
                     return;
 
                 CreateBeam(player, mineHandle, laserColor, mineData, isVerticalSurface);
@@ -177,7 +185,7 @@ public class HLTService
         catch (Exception ex)
         {
             _core.Logger.LogError($"{_core.Localizer["CreateMineError"]}: {ex.Message}");
-            if (mineEntity.IsValid)
+            if (mineEntity.IsValid && mineEntity.IsValidEntity)
             {
                 mineEntity.AcceptInput("Kill", 0);
             }
@@ -191,7 +199,7 @@ public class HLTService
             return;
 
         var ent = mineHandle.Value;
-        if (ent == null || !ent.IsValid)
+        if (ent == null || !ent.IsValid || !ent.IsValidEntity)
             return;
 
         if (!CreateTraceByEntity(mineHandle, out CGameTrace trace, out Vector Forward, mineData, isVerticalSurface))
@@ -200,7 +208,7 @@ public class HLTService
         }
 
         CBeam beam = _core.EntitySystem.CreateEntity<CBeam>();
-        if (beam == null)
+        if (beam == null || !beam.IsValid || !beam.IsValidEntity)
             return;
 
         beam.DispatchSpawn();
@@ -212,9 +220,10 @@ public class HLTService
             return;
 
         var beament = beamHandle.Value;
-        if (beament == null)
+        if (beament == null || !beament.IsValid || !beament.IsValidEntity)
             return;
 
+        _globals.MineBeamMap[mineHandle.Raw] = beamHandle.Raw;
 
         var startPos = trace.StartPos;
         var endPos = trace.EndPos;
@@ -241,7 +250,7 @@ public class HLTService
 
         _globals.MineThink[mineHandle.Raw] = _core.Scheduler.RepeatBySeconds(Rate, () =>
         {
-            if (!ent.IsValid)
+            if (!ent.IsValid || !ent.IsValidEntity)
             {
                 if (_globals.MineThink.TryGetValue(mineHandle.Raw, out var task))
                 {
@@ -250,7 +259,23 @@ public class HLTService
                     _globals.MineThink.Remove(mineHandle.Raw);
                 }
             }
-            PenetratingTrace(player, mineHandle, mineData, beamHandle, beamStart, beamDir, 8192, 10);
+            else
+            {
+                var _zpAPI = HanLaserTripmineS2._zpApi;
+                if (_zpAPI == null)
+                    return;
+
+                bool isZombie = _zpAPI.HZP_IsZombie(player.PlayerID);
+                if (isZombie)
+                {
+                    KillMine(mineHandle, beamHandle);
+                }
+                else
+                {
+                    PenetratingTrace(player, mineHandle, mineData, beamHandle, beamStart, beamDir, 8192, 10);
+                }
+            }
+            
         });
         _core.Scheduler.StopOnMapChange(_globals.MineThink[mineHandle.Raw]);
     }
@@ -262,7 +287,7 @@ public class HLTService
             return null;
 
         var ent = mineHandle.Value;
-        if (ent == null || !ent.IsValid)
+        if (ent == null || !ent.IsValid || !ent.IsValidEntity)
             return null;
 
         var OwnerPawn = player.PlayerPawn;
@@ -366,7 +391,7 @@ public class HLTService
             return false;
 
         var ent = mineHandle.Value;
-        if (ent == null || !ent.IsValid)
+        if (ent == null || !ent.IsValid || !ent.IsValidEntity)
             return false;
 
         var MinePos = ent.AbsOrigin;
@@ -444,11 +469,11 @@ public class HLTService
             return;
 
         var mine = mineHandle.Value;
-        if (mine == null || !mine.IsValid)
+        if (mine == null || !mine.IsValid || !mine.IsValidEntity)
             return;
 
         var beam = beamHandle.Value;
-        if (beam == null || !beam.IsValid)
+        if (beam == null || !beam.IsValid || !beam.IsValidEntity)
             return;
 
         var minePos = mine.AbsOrigin;
@@ -484,6 +509,8 @@ public class HLTService
         explosions.DetonateTime.Value = 0;
         explosions.DetonateTimeUpdated();
 
+        KillMine(mineHandle, beamHandle);
+        /*
         if (_globals.MineThink.TryGetValue(mineHandle.Raw, out var repeatTask))
         {
             repeatTask?.Cancel();              
@@ -499,7 +526,7 @@ public class HLTService
             if (beam.IsValid)
                 beam.AcceptInput("Kill", 0);
         });
-
+        */
 
     }
 
@@ -513,6 +540,64 @@ public class HLTService
             _logger.LogWarning($"{_core.Localizer["MineNameError", name]}");
         }
         return selectedTurret;
+    }
+
+    public void KillMine(CHandle<CBaseModelEntity> mineHandle, CHandle<CBeam> beamHandle)
+    {
+        if (!mineHandle.IsValid)
+            return;
+
+        var mine = mineHandle.Value;
+        if (mine == null || !mine.IsValid || !mine.IsValidEntity)
+            return;
+
+        var beam = beamHandle.Value;
+        if (beam == null || !beam.IsValid || !beam.IsValidEntity)
+            return;
+
+        if (_globals.MineThink.TryGetValue(mineHandle.Raw, out var repeatTask))
+        {
+            repeatTask?.Cancel();
+            _globals.MineThink.Remove(mineHandle.Raw);
+        }
+
+        _globals.MineData.Remove(mineHandle.Raw);
+
+        _core.Scheduler.NextTick(() =>
+        {
+            if (mine.IsValid && mine.IsValidEntity)
+                mine.AcceptInput("Kill", 0);
+            if (beam.IsValid && beam.IsValidEntity)
+                beam.AcceptInput("Kill", 0);
+        });
+
+        _globals.MineBeamMap.Remove(mineHandle.Raw);
+    }
+
+    public void RemoveAllPlayerMines(int playerID, ulong steamID)
+    {
+        if (_globals.MineOwner.TryGetValue(playerID, out var mineSet))
+        {
+            foreach (var mineRaw in mineSet.ToList())
+            {
+                var mineHandle = new CHandle<CBaseModelEntity>(mineRaw);
+
+                if (_globals.MineBeamMap.TryGetValue(mineRaw, out var beamRaw))
+                {
+                    var beamHandle = new CHandle<CBeam>(beamRaw);
+                    KillMine(mineHandle, beamHandle);
+                }
+
+                _globals.MineBeamMap.Remove(mineRaw);
+                _globals.MineThink.Remove(mineRaw);
+                _globals.MineData.Remove(mineRaw);
+            }
+
+            mineSet.Clear();
+            _globals.MineOwner.Remove(playerID);
+        }
+
+        _globals.PlayerMineCounts.Remove(steamID);
     }
 
 }
