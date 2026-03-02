@@ -69,43 +69,6 @@ public class HLTHelper
         targetPawn.Teleport(null, null, vel + pushVelocity);
     }
 
-    public SwiftlyS2.Shared.Natives.Vector CalculateKnockbackDirection(CHandle<CBaseModelEntity> mineHandle, IPlayer target, float force)
-    {
-        if (!mineHandle.IsValid)
-            return new SwiftlyS2.Shared.Natives.Vector(0, 0, 0);
-
-        var mine = mineHandle.Value;
-        if (mine == null || !mine.IsValid)
-            return new SwiftlyS2.Shared.Natives.Vector(0, 0, 0);
-
-        var pawn = target.PlayerPawn;
-        if (pawn == null || !pawn.IsValid)
-            return new SwiftlyS2.Shared.Natives.Vector(0, 0, 0);
-
-        var minePos = mine.AbsOrigin;
-        if (minePos == null)
-            return new SwiftlyS2.Shared.Natives.Vector(0, 0, 0);
-
-        var targetPos = pawn.AbsOrigin;
-        if (targetPos == null)
-            return new SwiftlyS2.Shared.Natives.Vector(0, 0, 0);
-
-        var dir = new SwiftlyS2.Shared.Natives.Vector(
-            targetPos.Value.X - minePos.Value.X,
-            targetPos.Value.Y - minePos.Value.Y,
-            targetPos.Value.Z - minePos.Value.Z
-        );
-
-        float length = MathF.Sqrt(dir.X * dir.X + dir.Y * dir.Y + dir.Z * dir.Z);
-        if (length <= 0.01f) return new SwiftlyS2.Shared.Natives.Vector(0, 0, 0);
-
-        return new SwiftlyS2.Shared.Natives.Vector(
-            dir.X / length * force,
-            dir.Y / length * force,
-            50f
-        );
-    }
-
     public void ApplyDamage(IPlayer attacker, IPlayer target, CHandle<CBaseModelEntity> mineHandle, float damageAmount, string hurtSound, DamageTypes_t damageType = DamageTypes_t.DMG_BULLET)
     {
         if (!mineHandle.IsValid)
