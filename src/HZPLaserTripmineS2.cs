@@ -11,7 +11,7 @@ namespace HZPLaserTripmineS2;
 
 [PluginMetadata(
     Id = "HZPLaserTripmineS2",
-    Version = "1.0.0",
+    Version = "1.0.1",
     Name = "ZP激光绊雷/HZPLaserTripmine",
     Author = "H-AN",
     Description = "H-AN ZP激光绊雷 for Sw2/H-AN HZPLaserTripmine for Sw2")]

@@ -1,11 +1,11 @@
 using HanZombiePlagueS2;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Mono.Cecil.Cil;
 using SwiftlyS2.Shared;
 using SwiftlyS2.Shared.Natives;
 using SwiftlyS2.Shared.Players;
 using SwiftlyS2.Shared.SchemaDefinitions;
+using SwiftlyS2.Shared.Trace;
 using static HZPLaserTripmineS2.HLTConfigs;
 using static HZPLaserTripmineS2.HLTGlobals;
 
@@ -72,7 +72,7 @@ public class HLTService
             return null;
         }
 
-        if (!_helpers.CreateTraceByEyePosition(player, out CGameTrace trace, out Vector playerForward))
+        if (!_helpers.CreateTraceByEyePosition(player, out TraceResult trace, out Vector playerForward))
         {
             return null;
         }
@@ -202,7 +202,7 @@ public class HLTService
         if (ent == null || !ent.IsValid || !ent.IsValidEntity)
             return;
 
-        if (!CreateTraceByEntity(mineHandle, out CGameTrace trace, out Vector Forward, mineData, isVerticalSurface))
+        if (!CreateTraceByEntity(mineHandle, out TraceResult trace, out Vector Forward, mineData, isVerticalSurface))
         {
             return;
         }
@@ -304,25 +304,22 @@ public class HLTService
         while (remainingDistance > 0.1f && penetrationCount < maxTargets)
         {
             Vector end = currentStart + direction * remainingDistance;
-            CGameTrace trace = new CGameTrace();
-
-            _core.Trace.SimpleTrace(
+            var trace = _core.Trace.TraceShapeLine(
                 currentStart,
                 end,
-                RayType_t.RAY_TYPE_LINE,
-                RnQueryObjectSet.Static | RnQueryObjectSet.Dynamic,
-                MaskTrace.Hitbox | MaskTrace.Player,
-                MaskTrace.Empty,
-                MaskTrace.Empty,
-                CollisionGroup.Always,
-                ref trace,
-                beamOwner
+                TraceParams.Builder()
+                    .WithLineRay()
+                    .WithObjectQuery(RnQueryObjectSet.Static | RnQueryObjectSet.Dynamic)
+                    .WithInteraction(MaskTrace.Hitbox | MaskTrace.Player)
+                    .WithCollisionGroup(CollisionGroup.Always)
+                    .IgnoreEntity(beamOwner)
+                    .Build()
             );
 
             if (!trace.DidHit || trace.Fraction >= 0.99f)
                 break;
 
-            if (trace.HitPlayer(out IPlayer target))
+            if (trace.HitPlayer(out var target) && target is not null)
             {
 
                 if (!hitPlayers.Contains(target))
@@ -382,9 +379,9 @@ public class HLTService
         return hitPlayers;
     }
 
-    public bool CreateTraceByEntity(CHandle<CBaseModelEntity> mineHandle, out CGameTrace trace, out Vector forward, Mines mineData, bool isVerticalSurface)
+    public bool CreateTraceByEntity(CHandle<CBaseModelEntity> mineHandle, out TraceResult trace, out Vector forward, Mines mineData, bool isVerticalSurface)
     {
-        trace = new CGameTrace();
+        trace = new TraceResult();
         forward = new Vector(0, 0, 0);
 
         if (!mineHandle.IsValid)
@@ -437,18 +434,15 @@ public class HLTService
 
         var endPos = startPos + forward * maxDistance;
 
-        trace = new CGameTrace();
-        _core.Trace.SimpleTrace(
+        trace = _core.Trace.TraceShapeLine(
             startPos,
             endPos,
-            RayType_t.RAY_TYPE_LINE,
-            RnQueryObjectSet.Static | RnQueryObjectSet.Dynamic,
-            MaskTrace.Solid | MaskTrace.Player,
-            MaskTrace.Empty,
-            MaskTrace.Empty,
-            CollisionGroup.NPC,
-            ref trace,
-            null
+            TraceParams.Builder()
+                .WithLineRay()
+                .WithObjectQuery(RnQueryObjectSet.Static | RnQueryObjectSet.Dynamic)
+                .WithInteraction(MaskTrace.Solid | MaskTrace.Player)
+                .WithCollisionGroup(CollisionGroup.NPC)
+                .Build()
         );
 
         if (trace.Fraction < 1.0f)

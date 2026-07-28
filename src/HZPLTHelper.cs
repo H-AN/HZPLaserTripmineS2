@@ -3,6 +3,7 @@ using SwiftlyS2.Shared;
 using SwiftlyS2.Shared.Natives;
 using SwiftlyS2.Shared.Players;
 using SwiftlyS2.Shared.SchemaDefinitions;
+using SwiftlyS2.Shared.Trace;
 using static HZPLaserTripmineS2.HLTGlobals;
 
 namespace HZPLaserTripmineS2;
@@ -184,9 +185,9 @@ public class HLTHelper
         return new SwiftlyS2.Shared.Natives.QAngle(pitch, yaw, roll);
     }
 
-    public bool CreateTraceByEyePosition(IPlayer player, out CGameTrace trace, out Vector forward)
+    public bool CreateTraceByEyePosition(IPlayer player, out TraceResult trace, out Vector forward)
     {
-        trace = new CGameTrace();
+        trace = new TraceResult();
         forward = new Vector(0, 0, 0); // 初始化
 
         var pawn = player.PlayerPawn;
@@ -203,18 +204,15 @@ public class HLTHelper
         var startPos = new Vector(eyePos.Value.X, eyePos.Value.Y, eyePos.Value.Z);
         var endPos = startPos + forward * 8192;
 
-        trace = new CGameTrace();
-        _core.Trace.SimpleTrace(
+        trace = _core.Trace.TraceShapeLine(
             startPos,
             endPos,
-            RayType_t.RAY_TYPE_LINE,
-            RnQueryObjectSet.Static | RnQueryObjectSet.Dynamic,
-            MaskTrace.Solid | MaskTrace.Player,
-            MaskTrace.Empty,
-            MaskTrace.Empty,
-            CollisionGroup.Player,
-            ref trace,
-            null
+            TraceParams.Builder()
+                .WithLineRay()
+                .WithObjectQuery(RnQueryObjectSet.Static | RnQueryObjectSet.Dynamic)
+                .WithInteraction(MaskTrace.Solid | MaskTrace.Player)
+                .WithCollisionGroup(CollisionGroup.Player)
+                .Build()
         );
 
         if (trace.Fraction < 1.0f)
